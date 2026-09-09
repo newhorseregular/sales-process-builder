@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Process Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Signika:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#1a1a1a;
+    --panel:#232323;
+    --panel-2:#2a2a2a;
+    --gold:#c8b568;
+    --gold-dim:#8f8250;
+    --white:#ffffff;
+    --muted:#b8b8b8;
+    --warn:#e0a458;
+    --danger:#d97a6c;
+    --border:#3a3a3a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--white);
+    font-family:'Nunito Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+    padding:24px 16px 80px;
+  }
+  h1,h2,h3,.brand-font{
+    font-family:'Signika','Avenir Next',sans-serif;
+    color:var(--gold);
+    letter-spacing:.3px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  header{text-align:center;margin-bottom:20px;}
+  h1{font-size:1.7rem;margin:0 0 6px;}
+  .subtitle{color:var(--muted);font-size:.95rem;margin:0 0 4px;}
+  .guidance{color:var(--gold-dim);font-size:.85rem;margin:0;}
+
+  .toolbar{
+    display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+    margin:18px 0;
+  }
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--white);
+    padding:8px 14px;
+    font-size:.85rem;
+    transition:.15s ease;
+  }
+  button:hover{border-color:var(--gold);color:var(--gold);}
+  .btn-primary{background:var(--gold);color:#1a1a1a;font-weight:700;border:none;}
+  .btn-primary:hover{background:#dcc785;color:#1a1a1a;}
+  .btn-ghost{background:transparent;}
+  .btn-danger:hover{border-color:var(--danger);color:var(--danger);}
+  .btn-small{padding:5px 9px;font-size:.78rem;}
+  .btn-icon{padding:6px 9px;line-height:1;}
+
+  .status-bar{
+    text-align:center;font-size:.85rem;margin-bottom:10px;color:var(--muted);
+  }
+  .warning{
+    max-width:520px;margin:0 auto 18px;
+    padding:10px 14px;border-radius:8px;
+    text-align:center;font-size:.85rem;font-weight:600;
+    border:1px solid var(--warn);color:var(--warn);background:rgba(224,164,88,.08);
+  }
+  .warning.hidden{display:none;}
+
+  .insert-row{
+    display:flex;align-items:center;justify-content:center;
+    height:22px;position:relative;
+  }
+  .insert-row button{
+    opacity:0;
+    transition:opacity .15s;
+    background:var(--panel);
+    border:1px dashed var(--gold-dim);
+    color:var(--gold-dim);
+    border-radius:14px;
+    padding:2px 12px;
+    font-size:.75rem;
+  }
+  .insert-row:hover button, .insert-row button:focus{opacity:1;color:var(--gold);border-color:var(--gold);}
+
+  .step-card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px;
+    position:relative;
+  }
+  .step-card.dragging{opacity:.4;}
+  .step-head{
+    display:flex;align-items:center;gap:8px;margin-bottom:10px;
+  }
+  .step-num{
+    background:var(--gold);color:#1a1a1a;font-weight:700;
+    width:26px;height:26px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.85rem;font-family:'Signika',sans-serif;flex-shrink:0;
+  }
+  .drag-handle{cursor:grab;color:var(--muted);font-size:1.1rem;padding:0 4px;user-select:none;}
+  .step-tag{
+    margin-left:auto;
+    background:var(--panel-2);color:var(--gold);
+    border:1px solid var(--border);border-radius:6px;
+    font-size:.75rem;padding:4px 6px;font-family:inherit;
+  }
+  .row-controls{display:flex;gap:4px;}
+
+  label{
+    display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--gold-dim);margin-bottom:4px;margin-top:10px;font-weight:700;
+  }
+  textarea, input[type=text]{
+    width:100%;background:var(--panel-2);color:var(--white);
+    border:1px solid var(--border);border-radius:8px;
+    padding:9px 10px;font-family:inherit;font-size:.9rem;resize:vertical;min-height:40px;
+  }
+  textarea:focus, input:focus{outline:none;border-color:var(--gold);}
+
+  .connector{
+    text-align:center;color:var(--gold-dim);font-size:.8rem;margin:6px 0;
+    display:flex;align-items:center;gap:8px;justify-content:center;
+  }
+  .connector .line{flex:1;max-width:60px;height:1px;background:var(--border);}
+
+  .add-step-wrap{text-align:center;margin-top:20px;}
+
+  .ai-panel{
+    max-width:560px;margin:0 auto 20px;
+    background:var(--panel);border:1px solid var(--gold-dim);
+    border-radius:12px;padding:16px;
+  }
+  .ai-panel.hidden{display:none;}
+  .ai-panel textarea{min-height:70px;}
+  .ai-row{display:flex;gap:8px;margin-top:10px;}
+  .ai-row select{
+    flex:1;background:var(--panel-2);color:var(--white);
+    border:1px solid var(--border);border-radius:8px;padding:8px;font-family:inherit;font-size:.85rem;
+  }
+  .ai-actions{display:flex;gap:8px;margin-top:12px;align-items:center;}
+  .ai-status{font-size:.8rem;margin-top:8px;min-height:1em;}
+
+  footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:30px;}
+  .brandline{color:var(--gold-dim);}
+
+  @media print{
+    .toolbar,.insert-row,.row-controls,.drag-handle,footer,.warning{display:none !important;}
+    body{background:#fff;color:#000;}
+    .step-card{border:1px solid #ccc;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Sales Process Builder</h1>
+    <p class="subtitle">Map each Action Step to its Call Objective — and let that objective lead into your next Action Step.</p>
+    <p class="guidance">Guidance: aim for <strong>3–8 steps</strong>. Too few misses the funnel, too many loses focus.</p>
+  </header>
+
+  <div class="toolbar">
+    <button class="btn-primary" id="aiToggle">&#10024; Generate with AI</button>
+    <button class="btn-primary" id="loadExample">Load Example</button>
+    <button id="startBlank">Start Blank</button>
+    <button id="exportPng">Export PNG</button>
+    <button id="exportPdf">Export PDF</button>
+    <button class="btn-danger" id="clearAll">Clear All</button>
+  </div>
+
+  <div class="ai-panel hidden" id="aiPanel">
+    <label>Describe your business & sales motion</label>
+    <textarea id="aiPrompt" placeholder="e.g. I sell B2B SaaS project management software to mid-size construction companies. Deals are around $15k/year, involve 2-3 stakeholders, and take about 6 weeks to close."></textarea>
+    <div class="ai-row">
+      <select id="aiMotion">
+        <option value="">Sales motion (optional)</option>
+        <option value="B2B">B2B</option>
+        <option value="B2C">B2C</option>
+        <option value="B2B2C">B2B2C</option>
+      </select>
+      <select id="aiStepCount">
+        <option value="">Step count (optional)</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+      </select>
+    </div>
+    <div class="ai-actions">
+      <button class="btn-primary" id="aiGenerate">Generate Process</button>
+      <button class="btn-ghost btn-small" id="aiCancel">Cancel</button>
+    </div>
+    <div class="ai-status" id="aiStatus"></div>
+  </div>
+
+  <div class="status-bar" id="statusBar"></div>
+  <div class="warning hidden" id="warningBanner"></div>
+
+  <div id="flowContainer"></div>
+
+  <div class="add-step-wrap">
+    <button class="btn-primary" id="addStepBtn">+ Add Step</button>
+  </div>
+
+  <footer>
+    Built for <span class="brandline">The Accidental Salesperson</span> · Morningbird Solutions
+  </footer>
+</div>
+
+<script>
+// ⚠️ EDIT THIS: replace with your actual WordPress site's URL (no trailing slash).
+// e.g. 'https://www.yoursite.com/wp-json/spb/v1/generate'
+const AI_ENDPOINT = 'https://REPLACE-WITH-YOUR-WORDPRESS-DOMAIN.com/wp-json/spb/v1/generate';
+
+const STORAGE_KEY = 'sales-process:steps';
+const TAGS = ['Discovery','Qualification','Demo','Proposal','Negotiation','Close','Follow-up','Other'];
+
+const EXAMPLE_STEPS = [
+  {action:'Cold outreach via LinkedIn or email referencing a specific trigger event (funding, hire, expansion).', objective:'Book a 15-minute discovery call to understand their current process.', tag:'Discovery'},
+  {action:'Conduct discovery call — ask open questions about pain points, current workflow, and decision process.', objective:'Confirm budget, authority, need, and timeline (BANT) and set a demo date.', tag:'Qualification'},
+  {action:'Deliver a tailored product demo focused on their stated pain points.', objective:'Get agreement that the solution solves their core problem, and identify remaining objections.', tag:'Demo'},
+  {action:'Send a proposal with pricing options and a clear next-step deadline.', objective:'Schedule a call to walk through the proposal and address questions.', tag:'Proposal'},
+  {action:'Proposal review call — address objections, adjust terms if needed.', objective:'Get verbal commitment and align on contract timeline.', tag:'Negotiation'},
+  {action:'Send contract for signature and confirm onboarding date.', objective:'Close the deal and hand off to onboarding/customer success.', tag:'Close'}
+];
+
+let steps = [];
+let dragSrcIndex = null;
+let saveTimer = null;
+
+function uid(){ return 'id'+Math.random().toString(36).slice(2,10); }
+
+function newStep(action='', objective='', tag='Discovery'){
+  return { id: uid(), action, objective, tag };
+}
+
+function loadFromStorage(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed) && parsed.length){
+        steps = parsed;
+        render();
+        return true;
+      }
+    }
+  }catch(e){ /* no saved data yet, or storage unavailable */ }
+  return false;
+}
+
+function saveToStorage(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(steps));
+    }catch(e){ console.error('Autosave failed', e); }
+  }, 400);
+}
+
+function loadExample(){
+  steps = EXAMPLE_STEPS.map(s => ({...s, id: uid()}));
+  render();
+  saveToStorage();
+}
+
+function startBlank(){
+  steps = [newStep(), newStep(), newStep()];
+  render();
+  saveToStorage();
+}
+
+function clearAll(){
+  if(!confirm('Clear all steps? This cannot be undone.')) return;
+  steps = [];
+  render();
+  saveToStorage();
+}
+
+function insertStepAt(index){
+  steps.splice(index, 0, newStep());
+  render();
+  saveToStorage();
+}
+
+function deleteStep(index){
+  steps.splice(index,1);
+  render();
+  saveToStorage();
+}
+
+function duplicateStep(index){
+  const s = steps[index];
+  steps.splice(index+1, 0, {...s, id: uid()});
+  render();
+  saveToStorage();
+}
+
+function moveStep(index, dir){
+  const target = index + dir;
+  if(target < 0 || target >= steps.length) return;
+  const [item] = steps.splice(index,1);
+  steps.splice(target,0,item);
+  render();
+  saveToStorage();
+}
+
+function updateStatus(){
+  const statusBar = document.getElementById('statusBar');
+  const warningBanner = document.getElementById('warningBanner');
+  const n = steps.length;
+  statusBar.textContent = n + (n===1?' step':' steps') + ' in your process';
+
+  if(n>0 && n<3){
+    warningBanner.textContent = 'Too few steps — a full sales process usually needs at least 3 to move a prospect from first contact to close.';
+    warningBanner.classList.remove('hidden');
+  } else if(n>8){
+    warningBanner.textContent = 'Too many steps — consider consolidating. Processes over 8 steps get hard to follow and execute consistently.';
+    warningBanner.classList.remove('hidden');
+  } else {
+    warningBanner.classList.add('hidden');
+  }
+}
+
+function insertRowHTML(index){
+  return `<div class="insert-row"><button data-insert="${index}" title="Insert step here">+ insert step</button></div>`;
+}
+
+function render(){
+  const container = document.getElementById('flowContainer');
+  container.innerHTML = '';
+
+  container.insertAdjacentHTML('beforeend', insertRowHTML(0));
+
+  steps.forEach((step, i) => {
+    const card = document.createElement('div');
+    card.className = 'step-card';
+    card.draggable = true;
+    card.dataset.index = i;
+
+    const tagOptions = TAGS.map(t => `<option value="${t}" ${t===step.tag?'selected':''}>${t}</option>`).join('');
+
+    card.innerHTML = `
+      <div class="step-head">
+        <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+        <span class="step-num">${i+1}</span>
+        <select class="step-tag" data-field="tag">${tagOptions}</select>
+        <div class="row-controls">
+          <button class="btn-icon btn-small" data-move-up title="Move up">&uarr;</button>
+          <button class="btn-icon btn-small" data-move-down title="Move down">&darr;</button>
+          <button class="btn-icon btn-small" data-duplicate title="Duplicate">&#10064;</button>
+          <button class="btn-icon btn-small btn-danger" data-delete title="Delete">&#10005;</button>
+        </div>
+      </div>
+      <label>Action Step</label>
+      <textarea data-field="action" placeholder="What do you do at this stage?">${step.action}</textarea>
+      <div class="connector"><span class="line"></span>leads to<span class="line"></span></div>
+      <label>Call Objective</label>
+      <textarea data-field="objective" placeholder="What must be true / agreed before moving on?">${step.objective}</textarea>
+    `;
+
+    // field bindings
+    card.querySelector('[data-field="action"]').addEventListener('input', e=>{ steps[i].action = e.target.value; saveToStorage(); });
+    card.querySelector('[data-field="objective"]').addEventListener('input', e=>{ steps[i].objective = e.target.value; saveToStorage(); });
+    card.querySelector('[data-field="tag"]').addEventListener('change', e=>{ steps[i].tag = e.target.value; saveToStorage(); });
+
+    card.querySelector('[data-move-up]').addEventListener('click', ()=>moveStep(i,-1));
+    card.querySelector('[data-move-down]').addEventListener('click', ()=>moveStep(i,1));
+    card.querySelector('[data-duplicate]').addEventListener('click', ()=>duplicateStep(i));
+    card.querySelector('[data-delete]').addEventListener('click', ()=>deleteStep(i));
+
+    // drag & drop (desktop)
+    card.addEventListener('dragstart', ()=>{ dragSrcIndex = i; card.classList.add('dragging'); });
+    card.addEventListener('dragend', ()=>{ card.classList.remove('dragging'); });
+    card.addEventListener('dragover', e=> e.preventDefault());
+    card.addEventListener('drop', e=>{
+      e.preventDefault();
+      if(dragSrcIndex === null || dragSrcIndex === i) return;
+      const [item] = steps.splice(dragSrcIndex,1);
+      steps.splice(i,0,item);
+      dragSrcIndex = null;
+      render();
+      saveToStorage();
+    });
+
+    container.appendChild(card);
+
+    if(i < steps.length - 1){
+      const between = document.createElement('div');
+      between.innerHTML = `<div class="connector" style="margin:2px 0 -6px;color:var(--gold-dim);">&#8595; call objective connects to next action step &#8595;</div>`;
+      container.appendChild(between);
+    }
+
+    container.insertAdjacentHTML('beforeend', insertRowHTML(i+1));
+  });
+
+  container.querySelectorAll('[data-insert]').forEach(btn=>{
+    btn.addEventListener('click', ()=> insertStepAt(parseInt(btn.dataset.insert,10)));
+  });
+
+  updateStatus();
+}
+
+async function exportPng(){
+  const el = document.querySelector('.wrap');
+  const canvas = await html2canvas(el, {backgroundColor:'#1a1a1a', scale:2});
+  const link = document.createElement('a');
+  link.download = 'sales-process.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+async function exportPdf(){
+  const el = document.querySelector('.wrap');
+  const canvas = await html2canvas(el, {backgroundColor:'#1a1a1a', scale:2});
+  const imgData = canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','pt',[canvas.width/2, canvas.height/2]);
+  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width/2, canvas.height/2);
+  pdf.save('sales-process.pdf');
+}
+
+function setAiStatus(msg, isError, isLoading){
+  const el = document.getElementById('aiStatus');
+  el.textContent = msg || '';
+  el.style.color = isError ? 'var(--danger)' : (isLoading ? 'var(--gold-dim)' : 'var(--gold)');
+}
+
+async function generateWithAI(){
+  const promptText = document.getElementById('aiPrompt').value.trim();
+  if(!promptText){ setAiStatus('Describe your business and sales motion first.', true); return; }
+  if(steps.length && !confirm('This will replace your current steps with an AI-generated process. Continue?')) return;
+
+  const motion = document.getElementById('aiMotion').value;
+  const stepCountPref = document.getElementById('aiStepCount').value;
+  const genBtn = document.getElementById('aiGenerate');
+  genBtn.disabled = true;
+  setAiStatus('Generating your sales process…', false, true);
+
+  try{
+    const response = await fetch(AI_ENDPOINT, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        description: promptText,
+        motion: motion,
+        step_count: stepCountPref
+      })
+    });
+    if(!response.ok){
+      const errBody = await response.json().catch(()=>({}));
+      throw new Error(errBody.message || ('Request failed with status ' + response.status));
+    }
+    const parsed = await response.json();
+    if(!Array.isArray(parsed) || !parsed.length) throw new Error('No steps returned');
+
+    steps = parsed.slice(0,8).map(s => newStep(
+      (s.action || '').toString(),
+      (s.objective || '').toString(),
+      TAGS.includes(s.tag) ? s.tag : 'Other'
+    ));
+    render();
+    saveToStorage();
+    setAiStatus('Generated ' + steps.length + ' steps — review and edit as needed.', false);
+    document.getElementById('aiPanel').classList.add('hidden');
+  }catch(err){
+    console.error('AI generation failed', err);
+    setAiStatus('Something went wrong generating the process. Try simplifying or rephrasing your description.', true);
+  } finally {
+    genBtn.disabled = false;
+  }
+}
+
+document.getElementById('aiToggle').addEventListener('click', ()=>{
+  document.getElementById('aiPanel').classList.toggle('hidden');
+});
+document.getElementById('aiCancel').addEventListener('click', ()=>{
+  document.getElementById('aiPanel').classList.add('hidden');
+  setAiStatus('');
+});
+document.getElementById('aiGenerate').addEventListener('click', generateWithAI);
+
+document.getElementById('loadExample').addEventListener('click', loadExample);
+document.getElementById('startBlank').addEventListener('click', startBlank);
+document.getElementById('clearAll').addEventListener('click', clearAll);
+document.getElementById('addStepBtn').addEventListener('click', ()=> insertStepAt(steps.length));
+document.getElementById('exportPng').addEventListener('click', exportPng);
+document.getElementById('exportPdf').addEventListener('click', exportPdf);
+
+(function init(){
+  const loaded = loadFromStorage();
+  if(!loaded){
+    loadExample();
+  }
+})();
+</script>
+</body>
+</html>
